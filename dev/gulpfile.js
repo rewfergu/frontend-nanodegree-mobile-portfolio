@@ -8,13 +8,6 @@ var inlineCSS = require('gulp-inline-css');
 
 gulp.task('minify-html', function() {
   gulp.src('*.html')
-<<<<<<< HEAD
-=======
-  .pipe(inlineCSS({
-    applyLinkTags: true,
-    removeLinkTags: true
-  }))
->>>>>>> 7d808afdaf6fffb8081be441f9f07437b329c912
   .pipe(compressHTML({
     removeComments: true,
     collapseWhitespace: true,
