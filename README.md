@@ -4,7 +4,7 @@ Your challenge, if you wish to accept it (and we sure hope you will), is to opti
 
 Files used for development are located in the /dev folder, files in the root folder are minified with gulp.
 
-A working demo can be found at this link:
+A working demo can be found at this link: [http://rewfergu.github.io/frontend-nanodegree-mobile-portfolio/](http://rewfergu.github.io/frontend-nanodegree-mobile-portfolio/)
 
 ###Optimizations for index.html
 1. Moved scripts in the header down to the footer.
@@ -16,5 +16,5 @@ A working demo can be found at this link:
 6. Minified code
 
 ###Optimizations for pizza.html
-1. Optimized floating pizza animation on scroll using Date.now() instead of scrollTop
+1. Optimized floating pizza animation on scroll by saving the scrollTop value outside of the loop
 2. Reduced the number of document.querySelector and document.querySelectorAll calls by storing the info in variables
