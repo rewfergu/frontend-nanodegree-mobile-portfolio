@@ -453,19 +453,22 @@ var resizePizzas = function(size) {
     return dx;
   }
 
-  var pizzas = document.querySelectorAll('.randomPizzaContainer');
+  // these variables are used in changePizzaSizes
+  // since they don't change during the loop, I've moved them outside the function to reduce the amount of work when the function is called
+  var pizzas = document.getElementsByClassName('randomPizzaContainer');
   var pizzaWidth = pizzas[0].offsetWidth;
   var windowwidth = document.querySelector('#randomPizzas').offsetWidth;
 
   // Iterates through pizza elements on the page and changes their widths
+  // Most of what I did was take work out of the loop
+  // variables that didn't change over time don't need to be recalculated on each loop iteration
   function changePizzaSizes(size) {
-    //var pizzas = document.querySelectorAll('.randomPizzaContainer');
-    for (var i = 0; i < pizzas.length; i++) {
-      var dx = determineDx(pizzas[i], size);
+    // moved outside the loop because the value doesn't change while loop is running
+    var dx = determineDx(pizzas[0], size);
+    var newwidth = (pizzaWidth + dx) + 'px';
 
-      // this is slowing us down
-      //var newwidth = (pizzas[i].offsetWidth + dx) + 'px';
-      var newwidth = (pizzaWidth + dx) + 'px';
+    // loop through all pizzas and set width
+    for (var i = 0; i < pizzas.length; i++) {
       pizzas[i].style.width = newwidth;
     }
   }
@@ -473,25 +476,27 @@ var resizePizzas = function(size) {
   changePizzaSizes(size);
 
   // User Timing API is awesome
-  window.performance.mark("mark_end_resize");
-  window.performance.measure("measure_pizza_resize", "mark_start_resize", "mark_end_resize");
-  var timeToResize = window.performance.getEntriesByName("measure_pizza_resize");
-  console.log("Time to resize pizzas: " + timeToResize[0].duration + "ms");
+  window.performance.mark('mark_end_resize');
+  window.performance.measure('measure_pizza_resize', 'mark_start_resize', 'mark_end_resize');
+  var timeToResize = window.performance.getEntriesByName('measure_pizza_resize');
+  console.log('Time to resize pizzas: ' + timeToResize[0].duration + 'ms');
 };
 
-window.performance.mark("mark_start_generating"); // collect timing data
+window.performance.mark('mark_start_generating'); // collect timing data
+
+// moved this variable declaration outside the loop below
+var pizzasDiv = document.getElementById('randomPizzas');
 
 // This for-loop actually creates and appends all of the pizzas when the page loads
 for (var i = 2; i < 100; i++) {
-  var pizzasDiv = document.getElementById("randomPizzas");
   pizzasDiv.appendChild(pizzaElementGenerator(i));
 }
 
 // User Timing API again. These measurements tell you how long it took to generate the initial pizzas
-window.performance.mark("mark_end_generating");
-window.performance.measure("measure_pizza_generation", "mark_start_generating", "mark_end_generating");
-var timeToGenerate = window.performance.getEntriesByName("measure_pizza_generation");
-console.log("Time to generate pizzas on load: " + timeToGenerate[0].duration + "ms");
+window.performance.mark('mark_end_generating');
+window.performance.measure('measure_pizza_generation', 'mark_start_generating', 'mark_end_generating');
+var timeToGenerate = window.performance.getEntriesByName('measure_pizza_generation');
+console.log('Time to generate pizzas on load: ' + timeToGenerate[0].duration + 'ms');
 
 // Iterator for number of times the pizzas in the background have scrolled.
 // Used by updatePositions() to decide when to log the average time per frame
@@ -504,33 +509,40 @@ function logAverageFrame(times) {   // times is the array of User Timing measure
   for (var i = numberOfEntries - 1; i > numberOfEntries - 11; i--) {
     sum = sum + times[i].duration;
   }
-  console.log("Average time to generate last 10 frames: " + sum / 10 + "ms");
+  console.log('Average time to generate last 10 frames: ' + sum / 10 + 'ms');
 }
 
 // The following code for sliding background pizzas was pulled from Ilya's demo found at:
 // https://www.igvita.com/slides/2012/devtools-tips-and-tricks/jank-demo.html
 
 // creating a variable to hold all of our moving pizza elements
+// we will fill the var on page load and use it in the loop in updatePositions
 var items;
 
 // Moves the sliding background pizzas based on scroll position
+// The loop was doing a bunch of extra work here too, so I pulled stuff out
+// variables could be shared across functions and some only needed to be run once
+// I left the script alone where it changed the left property, because translateX altered the animation
+// modifying the phase variable too much also affected the animation too much
+// the performance gain didn't seem worth it
 function updatePositions() {
   frame++;
-  window.performance.mark("mark_start_frame");
+  window.performance.mark('mark_start_frame');
+
+  // moved the scrollTop lookup outside the loop below to save some time
   var scrollPosition = document.body.scrollTop;
 
   for (var i = 0; i < items.length; i++) {
     var phase = Math.sin((scrollPosition / 1250) + (i % 5));
-
     items[i].style.left = items[i].basicLeft + 100 * phase + 'px';
   }
 
   // User Timing API to the rescue again. Seriously, it's worth learning.
   // Super easy to create custom metrics.
-  window.performance.mark("mark_end_frame");
-  window.performance.measure("measure_frame_duration", "mark_start_frame", "mark_end_frame");
+  window.performance.mark('mark_end_frame');
+  window.performance.measure('measure_frame_duration', 'mark_start_frame', 'mark_end_frame');
   if (frame % 10 === 0) {
-    var timesToUpdatePosition = window.performance.getEntriesByName("measure_frame_duration");
+    var timesToUpdatePosition = window.performance.getEntriesByName('measure_frame_duration');
     logAverageFrame(timesToUpdatePosition);
   }
 }
@@ -540,18 +552,23 @@ window.addEventListener('scroll', updatePositions);
 
 // Generates the sliding pizzas when the page loads.
 document.addEventListener('DOMContentLoaded', function() {
-  var cols = 8;
-  var s = 256;
-  for (var i = 0; i < 200; i++) {
+  // changing the grid size increases pizza density, but its still less than 200 on my laptop
+  var grid = 256;
+  var cols = Math.floor(window.innerWidth / grid) + 1;
+  var rows = Math.floor(window.innerHeight / grid) + 1;
+  var totalGrid = cols * rows;
+  for (var i = 0; i < totalGrid; i++) {
     var elem = document.createElement('img');
     elem.className = 'mover';
-    elem.src = "images/pizza.png";
-    elem.style.height = "100px";
-    elem.style.width = "73.333px";
-    elem.basicLeft = (i % cols) * s/2;
-    elem.style.top = (Math.floor(i / cols) * s) + 'px';
-    document.querySelector("#movingPizzas1").appendChild(elem);
+    elem.src = 'images/pizza.png';
+    elem.style.height = '100px';
+    elem.style.width = '73.333px';
+    elem.basicLeft = (i % cols) * grid;
+    elem.style.top = (Math.floor(i / cols) * grid) + 'px';
+    document.querySelector('#movingPizzas1').appendChild(elem);
   }
-  items = document.querySelectorAll('.mover');
+
+  // adding the .mover elements to the items array here instead of the loop above to hopefully save time
+  items = document.getElementsByClassName('mover');
   updatePositions();
 });
