@@ -455,18 +455,20 @@ var resizePizzas = function(size) {
 
   // these variables are used in changePizzaSizes
   // since they don't change during the loop, I've moved them outside the function to reduce the amount of work when the function is called
-  var pizzas = document.querySelectorAll('.randomPizzaContainer');
+  var pizzas = document.getElementsByClassName('randomPizzaContainer');
   var pizzaWidth = pizzas[0].offsetWidth;
   var windowwidth = document.querySelector('#randomPizzas').offsetWidth;
 
   // Iterates through pizza elements on the page and changes their widths
+  // Most of what I did was take work out of the loop
+  // variables that didn't change over time don't need to be recalculated on each loop iteration
   function changePizzaSizes(size) {
     // moved outside the loop because the value doesn't change while loop is running
     var dx = determineDx(pizzas[0], size);
+    var newwidth = (pizzaWidth + dx) + 'px';
 
     // loop through all pizzas and set width
     for (var i = 0; i < pizzas.length; i++) {
-      var newwidth = (pizzaWidth + dx) + 'px';
       pizzas[i].style.width = newwidth;
     }
   }
@@ -518,6 +520,11 @@ function logAverageFrame(times) {   // times is the array of User Timing measure
 var items;
 
 // Moves the sliding background pizzas based on scroll position
+// The loop was doing a bunch of extra work here too, so I pulled stuff out
+// variables could be shared across functions and some only needed to be run once
+// I left the script alone where it changed the left property, because translateX altered the animation
+// modifying the phase variable too much also affected the animation too much
+// the performance gain didn't seem worth it
 function updatePositions() {
   frame++;
   window.performance.mark('mark_start_frame');
